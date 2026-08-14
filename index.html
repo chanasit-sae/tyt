@@ -229,6 +229,7 @@
   </div>
   <div class="grp"><span>Exam Prep</span>
     <a class="item" href="#exam">Exam checklist</a>
+    <a class="item" href="#labs">Lab solutions</a>
     <a class="item" href="#pinmap">Board pin map</a>
   </div>
 </nav>
@@ -768,6 +769,37 @@
   </div>
   <div class="box tip"><span class="lbl">Bus memory aid</span>
     <b>GPIO → AHB1</b>, <b>USART2 → APB1</b>, <b>ADC1 &amp; SYSCFG → APB2</b>. Picking the wrong RCC register is the most common exam slip.</div>
+</section>
+
+<!-- ================= LAB SOLUTIONS ================= -->
+<section id="labs">
+  <h2 class="ch">Lab solutions</h2>
+  <p>Complete, commented solutions for every lab live in the <code>labs/</code> folder next to this file — grouped by chapter, one <code>.c</code> file per lab, each with a header block (goal, wiring, terminal, expected result) and a per-chapter <code>CHEATSHEET.md</code>.</p>
+  <pre><code><span class="cm">labs/</span>
+  README.txt                <span class="cm"># build/flash + terminal instructions</span>
+  <span class="reg">ch1_gpio/</span>
+    CHEATSHEET.md
+    lab1_2_blink.c          <span class="cm"># blink the blue LED (PA5)</span>
+    lab1_3_button.c         <span class="cm"># button (PB4) lights the LED while pressed</span>
+    lab1_5_polling.c        <span class="cm"># poll a button; each press toggles the LED</span>
+  <span class="reg">ch3_uart/</span>
+    CHEATSHEET.md
+    lab3_1_tx.c             <span class="cm"># send 'K' every second over USART2</span>
+    lab3_4_echo.c           <span class="cm"># echo typed chars; '1' lights the green LED</span>
+  <span class="reg">ch4_adc/</span>
+    CHEATSHEET.md
+    lab4_1_potentiometer.c  <span class="cm"># pot; LED on past midpoint (2048)</span>
+    lab4_2_ntc.c            <span class="cm"># NTC; print temperature over UART</span>
+    lab4_3_ldr.c            <span class="cm"># LDR; print lux; LED on when dark</span>
+  <span class="reg">ch5_interrupts/</span>
+    CHEATSHEET.md
+    lab5_1_uart_rx.c        <span class="cm"># UART receive by interrupt (RXNEIE)</span>
+    lab5_2_adc_eoc.c        <span class="cm"># ADC End-Of-Conversion interrupt (EOCIE)</span>
+    lab5_3_exti.c           <span class="cm"># button press raises an EXTI interrupt</span></code></pre>
+  <div class="box tip"><span class="lbl">Running them</span>
+    Create an empty (register-level, no-HAL) STM32F411RE project in STM32CubeIDE or Keil, replace <code>main.c</code> with the lab's file, build, and flash over the on-board ST-Link. Serial labs use <b>115200 baud, 8-N-1</b> on the ST-Link Virtual COM Port. Full steps are in <code>labs/README.txt</code>.</div>
+  <div class="box warn"><span class="lbl">Before you trust the output</span>
+    Register macro spellings vary slightly by CMSIS header version (e.g. <code>GPIO_PUPDR_PUPD4</code> vs <code>PUPDR4</code>) — check <code>stm32f4xx.h</code> if one won't compile. Lab 4.3's <code>SLOPE</code>/<code>OFFSET</code> are the reconstructed GL5528 constants; verify them against your slide.</div>
 </section>
 
 <!-- ================= PIN MAP ================= -->
