@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Embedded Systems Study Guide — STM32F411RE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#e8ecf2; --card:#ffffff; --ink:#0d1219; --muted:#54606f; --line:#d2dae5;
+    --navy:#0b3d5c; --volt:#e8590c; --voltsoft:#fff2e8;
+    --term:#0f1523; --term-line:#26304a;
+    --key:#b45309; --key-bg:#fff7ed;
+    --exam:#be123c; --exam-bg:#fff1f3;
+    --tip:#047857; --tip-bg:#ecfdf5;
+    --warn:#6d28d9; --warn-bg:#f5f3ff;
+    --note:#1d4ed8; --note-bg:#eff6ff;
+    --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    --disp:"Space Grotesk","Inter",sans-serif;
+    --mono:"IBM Plex Mono","SF Mono",Consolas,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--sans);line-height:1.65;font-size:16px;-webkit-font-smoothing:antialiased}
+  a{color:var(--navy);text-decoration:none;font-weight:500}
+  a:hover{color:var(--volt);text-decoration:underline}
+
+  /* reading progress */
+  #progress{position:fixed;top:0;left:0;height:3px;width:0;background:var(--volt);z-index:100;
+    transition:width .1s linear}
+
+  /* Layout */
+  .wrap{display:flex;min-height:100vh}
+  nav.side{width:288px;flex:0 0 288px;background:var(--card);border-right:1px solid var(--line);
+    position:sticky;top:0;height:100vh;overflow-y:auto;padding:0 0 40px}
+  nav.side .brand{padding:22px 22px 16px;border-bottom:1px solid var(--line);
+    background:var(--navy);color:#fff;position:sticky;top:0;z-index:2}
+  nav.side .brand h1{font-family:var(--disp);font-size:16px;margin:0 0 4px;color:#fff;letter-spacing:.01em}
+  nav.side .brand p{font-family:var(--mono);font-size:11px;color:#9fc4dd;margin:0;letter-spacing:.02em}
+  nav.side .grp{padding:12px 0 4px}
+  nav.side .grp > span{display:block;padding:6px 22px;font-family:var(--mono);font-size:10.5px;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--volt);font-weight:600}
+  nav.side a.item{display:block;padding:6px 22px 6px 26px;font-size:13.5px;color:var(--ink);
+    border-left:3px solid transparent;transition:background .12s,border-color .12s}
+  nav.side a.item:hover{background:var(--paper);text-decoration:none;color:var(--navy)}
+  nav.side a.item.sub{padding-left:38px;font-size:12.5px;color:var(--muted)}
+  nav.side a.item.active{background:var(--voltsoft);border-left-color:var(--volt);
+    color:var(--volt);font-weight:600}
+
+  main{flex:1;min-width:0;padding:0 0 120px;max-width:1120px}
+  .inner{padding:38px 52px 0}
+
+  /* HERO */
+  header.hero{background:var(--navy);color:#fff;padding:44px 52px 40px;
+    background-image:radial-gradient(rgba(255,255,255,.06) 1px,transparent 1px);
+    background-size:22px 22px;border-bottom:3px solid var(--volt)}
+  header.hero .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.18em;
+    text-transform:uppercase;color:#7fd0f0;margin:0 0 14px}
+  header.hero h1{font-family:var(--disp);font-size:38px;line-height:1.1;margin:0 0 12px;color:#fff;
+    max-width:760px;letter-spacing:-.01em}
+  header.hero h1 em{font-style:normal;color:var(--volt)}
+  header.hero .lede{color:#c8d8e6;margin:0;font-size:16px;max-width:680px}
+  .chips{display:flex;flex-wrap:wrap;gap:10px;margin:24px 0 26px}
+  .chip{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.07);
+    border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:9px 14px;font-size:13px}
+  .chip b{font-family:var(--mono);color:var(--volt);font-size:13px}
+
+  /* bit-field signature */
+  .bitfield{background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.14);border-radius:10px;
+    padding:16px 18px;max-width:640px}
+  .bitfield .bf-cap{font-family:var(--mono);font-size:12px;color:#9fc4dd;margin:0 0 12px;
+    display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .bitfield .bf-cap b{color:#fff}
+  .bf-row{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+  .bf-cell{text-align:center;border:1px solid rgba(255,255,255,.16);border-radius:6px;
+    padding:8px 0 6px;background:rgba(255,255,255,.04)}
+  .bf-cell .bits{font-family:var(--mono);font-size:15px;font-weight:600;color:#cbd5e6;letter-spacing:.06em}
+  .bf-cell .pin{font-family:var(--mono);font-size:10px;color:#7f8ba0;margin-top:3px}
+  .bf-cell.hot{background:var(--volt);border-color:var(--volt)}
+  .bf-cell.hot .bits{color:#fff} .bf-cell.hot .pin{color:#ffe1cc}
+
+  /* Sections */
+  section{margin:0 0 8px;scroll-margin-top:14px}
+  h2.ch{font-family:var(--disp);font-size:25px;color:var(--navy);margin:46px 0 18px;
+    padding:0 0 0 16px;position:relative;line-height:1.2}
+  h2.ch::before{content:"";position:absolute;left:0;top:3px;bottom:3px;width:5px;
+    background:var(--volt);border-radius:3px}
+  h3{font-family:var(--disp);font-size:19px;color:var(--navy);margin:30px 0 10px}
+  h4{font-family:var(--mono);font-size:12.5px;color:var(--volt);margin:22px 0 8px;
+    text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+  p{margin:11px 0}
+  ul,ol{margin:11px 0;padding-left:24px}
+  li{margin:6px 0}
+  b{font-weight:600}
+  sup,sub{font-family:var(--mono);font-size:.7em}
+
+  /* inline highlight */
+  .hl{background:linear-gradient(transparent 58%,rgba(232,89,12,.30) 0);
+    padding:0 2px;font-weight:600;color:var(--ink)}
+
+  /* code */
+  code{background:#eef2f7;border:1px solid #dbe2ec;border-radius:5px;padding:1px 6px;
+    font-family:var(--mono);font-size:12.5px;color:#9a3412}
+  pre{background:var(--term);border:1px solid var(--term-line);border-radius:10px;
+    padding:18px 20px;overflow-x:auto;font-size:13px;line-height:1.55;margin:16px 0;
+    box-shadow:0 6px 20px rgba(11,61,92,.12)}
+  pre code{background:none;border:none;padding:0;color:#e2e7f5;font-size:13px}
+  .cm{color:#7a869e} .kw{color:#c084fc} .fn{color:#5fa8ff}
+  .num{color:#fbbf24} .str{color:#5be08a} .reg{color:#ff8fc4}
+
+  /* Callout boxes */
+  .box{border-radius:10px;padding:16px 18px 16px 20px;margin:18px 0;background:var(--card);
+    border:1px solid var(--line);border-left-width:5px;box-shadow:0 2px 8px rgba(13,18,25,.05)}
+  .box .lbl{font-family:var(--mono);font-weight:600;font-size:11.5px;letter-spacing:.06em;
+    text-transform:uppercase;display:block;margin-bottom:8px}
+  .box pre{margin:12px 0 4px}
+  .box p:first-of-type{margin-top:0}
+  .key{border-left-color:var(--key);background:var(--key-bg)} .key .lbl{color:var(--key)}
+  .exam{border-left-color:var(--exam);background:var(--exam-bg)} .exam .lbl{color:var(--exam)}
+  .tip{border-left-color:var(--tip);background:var(--tip-bg)} .tip .lbl{color:var(--tip)}
+  .warn{border-left-color:var(--warn);background:var(--warn-bg)} .warn .lbl{color:var(--warn)}
+  .note{border-left-color:var(--note);background:var(--note-bg)} .note .lbl{color:var(--note)}
+  .box .lbl::before{margin-right:7px;font-weight:700}
+  .key .lbl::before{content:"KEY"} .exam .lbl::before{content:"EXAM"}
+  .tip .lbl::before{content:"TIP"} .warn .lbl::before{content:"WARN"}
+  .note .lbl::before{content:"NOTE"}
+  .box .lbl::before{display:inline-block;padding:1px 6px;border-radius:4px;font-size:9.5px;
+    letter-spacing:.08em;color:#fff;vertical-align:middle;margin-top:-2px}
+  .key .lbl::before{background:var(--key)} .exam .lbl::before{background:var(--exam)}
+  .tip .lbl::before{background:var(--tip)} .warn .lbl::before{background:var(--warn)}
+  .note .lbl::before{background:var(--note)}
+
+  /* Tables */
+  table{border-collapse:collapse;width:100%;margin:18px 0;font-size:13.5px;
+    background:var(--card);border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(13,18,25,.05)}
+  th,td{border-bottom:1px solid var(--line);padding:9px 13px;text-align:left;vertical-align:top}
+  th{background:var(--navy);color:#fff;font-weight:600;font-family:var(--disp);font-size:13px;
+    border-bottom:none}
+  td code{font-size:12px}
+  tbody tr:last-child td,table tr:last-child td{border-bottom:none}
+  tr:nth-child(even) td{background:#f5f8fc}
+
+  .pill{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;
+    margin-right:6px;font-family:var(--mono)}
+  .pill.b{background:#dbeafe;color:#1e40af} .pill.g{background:#d1fae5;color:#065f46}
+  .pill.a{background:#fef3c7;color:#92400e} .pill.r{background:#fee2e2;color:#991b1b}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+
+  .formula{background:var(--term);border:1px solid var(--term-line);border-radius:10px;
+    padding:18px 20px;text-align:center;font-size:17px;margin:16px 0;font-family:var(--mono);
+    color:#ffd08a;box-shadow:0 6px 20px rgba(11,61,92,.12)}
+  details{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:10px 18px;margin:16px 0}
+  details summary{cursor:pointer;font-weight:600;color:var(--navy);font-family:var(--disp)}
+  details[open] summary{margin-bottom:10px}
+  .toc-back{font-size:12.5px;color:var(--muted);font-family:var(--mono)}
+  hr{border:none;border-top:1px solid var(--line);margin:32px 0}
+  .kbd{font-family:var(--mono);background:#fff;border:1px solid var(--line);
+    border-bottom-width:2px;border-radius:5px;padding:1px 7px;font-size:12px;color:var(--ink)}
+
+  @media(max-width:900px){
+    nav.side{display:none}
+    .inner{padding:24px 18px 0} header.hero{padding:30px 20px 28px}
+    header.hero h1{font-size:28px} .grid2{grid-template-columns:1fr}
+    .bf-row{grid-template-columns:repeat(8,1fr);gap:3px}
+    .bf-cell .bits{font-size:12px}
+  }
+  @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}#progress{transition:none}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="wrap">
+<nav class="side">
+  <div class="brand">
+    <h1>Embedded Systems</h1>
+    <p>STM32F411RE · Nucleo · STEO</p>
+  </div>
+  <div class="grp"><span>Start Here</span>
+    <a class="item" href="#how-to-use">How to use this guide</a>
+    <a class="item" href="#big-picture">The big picture</a>
+    <a class="item" href="#cheatsheet">Register cheat-sheet</a>
+  </div>
+  <div class="grp"><span>Ch 0 — Foundations</span>
+    <a class="item" href="#ch0">Overview</a>
+    <a class="item sub" href="#ch0-cpu">CPU, memory, peripherals</a>
+    <a class="item sub" href="#ch0-mmio">Memory-mapped I/O</a>
+    <a class="item sub" href="#ch0-bits">Bit manipulation</a>
+  </div>
+  <div class="grp"><span>Ch 1 — GPIO</span>
+    <a class="item" href="#ch1">Overview</a>
+    <a class="item sub" href="#ch1-clock">Clock gating (RCC)</a>
+    <a class="item sub" href="#ch1-registers">GPIO registers</a>
+    <a class="item sub" href="#ch1-output">Output (LED)</a>
+    <a class="item sub" href="#ch1-input">Input + pull-up/down</a>
+    <a class="item sub" href="#ch1-polling">Polling & blocking</a>
+    <a class="item sub" href="#ch1-regdef">Register-definition file</a>
+  </div>
+  <div class="grp"><span>Ch 3 — UART</span>
+    <a class="item" href="#ch3">Overview</a>
+    <a class="item sub" href="#ch3-frame">Frames & baud</a>
+    <a class="item sub" href="#ch3-registers">USART2 registers</a>
+    <a class="item sub" href="#ch3-tx">Transmit</a>
+    <a class="item sub" href="#ch3-strings">Strings & sprintf</a>
+    <a class="item sub" href="#ch3-rx">Receive & echo</a>
+  </div>
+  <div class="grp"><span>Ch 4 — ADC</span>
+    <a class="item" href="#ch4">Overview</a>
+    <a class="item sub" href="#ch4-basics">ADC fundamentals</a>
+    <a class="item sub" href="#ch4-registers">ADC registers</a>
+    <a class="item sub" href="#ch4-lab41">Lab 4.1 potentiometer</a>
+    <a class="item sub" href="#ch4-ntc">NTC thermistor</a>
+    <a class="item sub" href="#ch4-fpu">FPU</a>
+    <a class="item sub" href="#ch4-ldr">LDR</a>
+  </div>
+  <div class="grp"><span>Ch 5 — Interrupts</span>
+    <a class="item" href="#ch5">Overview</a>
+    <a class="item sub" href="#ch5-why">Why interrupts</a>
+    <a class="item sub" href="#ch5-nvic">NVIC</a>
+    <a class="item sub" href="#ch5-isr">ISR & CMSIS</a>
+    <a class="item sub" href="#ch5-lab51">Lab 5.1 UART Rx</a>
+    <a class="item sub" href="#ch5-lab52">Lab 5.2 ADC EOC</a>
+    <a class="item sub" href="#ch5-exti">EXTI (external)</a>
+    <a class="item sub" href="#ch5-lab53">Lab 5.3 EXTI</a>
+  </div>
+  <div class="grp"><span>Exam Prep</span>
+    <a class="item" href="#exam">Exam checklist</a>
+    <a class="item" href="#pinmap">Board pin map</a>
+  </div>
+</nav>
+
+<main>
+<header class="hero">
+  <p class="eyebrow">NEXTY / Toyota Tsusho · STEO Training</p>
+  <h1>Register-level <em>embedded systems</em>, made exam-ready.</h1>
+  <p class="lede">Everything you need to finish the labs, assignments, and exam on the STM32F411RE (ARM Cortex-M4) — built straight from the course slides for Chapters 0, 1, 3, 4, and 5.</p>
+  <div class="chips">
+    <div class="chip"><b>1</b> Clock (RCC)</div>
+    <div class="chip"><b>2</b> Pin (GPIO mode)</div>
+    <div class="chip"><b>3</b> Configure peripheral</div>
+    <div class="chip"><b>4</b> Use — poll or interrupt</div>
+  </div>
+  <div class="bitfield">
+    <p class="bf-cap"><span><b>GPIOA_MODER</b> · 2 bits per pin</span><span>PA5 = <b style="color:var(--volt)">01 output</b></span></p>
+    <div class="bf-row">
+      <div class="bf-cell"><div class="bits">00</div><div class="pin">PA7</div></div>
+      <div class="bf-cell"><div class="bits">00</div><div class="pin">PA6</div></div>
+      <div class="bf-cell hot"><div class="bits">01</div><div class="pin">PA5</div></div>
+      <div class="bf-cell"><div class="bits">00</div><div class="pin">PA4</div></div>
+      <div class="bf-cell"><div class="bits">00</div><div class="pin">PA3</div></div>
+      <div class="bf-cell"><div class="bits">00</div><div class="pin">PA2</div></div>
+      <div class="bf-cell"><div class="bits">00</div><div class="pin">PA1</div></div>
+      <div class="bf-cell"><div class="bits">00</div><div class="pin">PA0</div></div>
+    </div>
+  </div>
+</header>
+
+<div class="inner">
+<!-- ================= HOW TO USE ================= -->
+<section id="how-to-use">
+  <h2 class="ch">How to use this guide</h2>
+  <p>This course teaches you to control a microcontroller by writing directly to its <span class="hl">registers</span> — no library magic. Every lab follows the same rhythm, and once you internalize it, every assignment becomes fill-in-the-blank.</p>
+  <div class="box key"><span class="lbl">The one pattern behind every lab</span>
+    <ol>
+      <li><b>Turn on the clock</b> for the peripheral (RCC enable bit) — <span class="hl">nothing works without this</span>.</li>
+      <li><b>Configure the pin</b> (GPIO mode: input / output / alternate / analog).</li>
+      <li><b>Configure the peripheral</b> (UART baud, ADC channel, EXTI edge…).</li>
+      <li><b>Use it</b> — either by <span class="pill b">polling</span> a flag in a loop, or by <span class="pill g">interrupt</span> (Ch 5).</li>
+    </ol>
+  </div>
+  <div class="box tip"><span class="lbl">Study strategy</span>
+    Read a chapter overview → study the register table → read the lab code line by line and predict each blank <i>before</i> looking at the answer. The exam blanks are the same registers you fill in the labs.</div>
+</section>
+
+<!-- ================= BIG PICTURE ================= -->
+<section id="big-picture">
+  <h2 class="ch">The big picture</h2>
+  <table>
+    <tr><th>Thing</th><th>What it is</th><th>Why you care</th></tr>
+    <tr><td><b>STM32F411RE</b></td><td>The microcontroller: ARM Cortex-M4 core, 16 MHz default clock, 512 KB Flash, 128 KB SRAM.</td><td>The chip you program.</td></tr>
+    <tr><td><b>Nucleo-F411RE</b></td><td>The development board that carries the chip + ST-Link debugger/USB.</td><td>How you flash code and get a serial port.</td></tr>
+    <tr><td><b>STEO Training Shield</b></td><td>Add-on board with LEDs, buttons, potentiometer, sensors.</td><td>The peripherals the labs drive.</td></tr>
+    <tr><td><b>Registers</b></td><td>Special memory addresses inside the chip that control hardware.</td><td>You program by reading/writing these.</td></tr>
+    <tr><td><b>CMSIS / <code>stm32f4xx.h</code></b></td><td>Header giving names to every register and bit.</td><td>Lets you write <code>GPIOA-&gt;MODER</code> instead of raw addresses.</td></tr>
+  </table>
+  <div class="box note"><span class="lbl">Course map</span>
+    <b>Ch 0</b> foundations (CPU, memory, bits) → <b>Ch 1</b> GPIO (digital in/out) → <b>Ch 3</b> UART (talk to a PC) → <b>Ch 4</b> ADC (read analog sensors) → <b>Ch 5</b> Interrupts (react without wasting CPU). Each chapter reuses the previous one.</div>
+</section>
+
+<!-- ================= CHEAT SHEET ================= -->
+<section id="cheatsheet">
+  <h2 class="ch">Register cheat-sheet</h2>
+  <p>Keep this open while doing labs. These are the registers the whole course rotates around.</p>
+
+  <h4>Clock enable (RCC) — always step 1</h4>
+  <table>
+    <tr><th>Bus</th><th>Register</th><th>Enables</th><th>Example macro</th></tr>
+    <tr><td>AHB1</td><td><code>RCC-&gt;AHB1ENR</code></td><td>GPIO ports A–H</td><td><code>RCC_AHB1ENR_GPIOAEN</code></td></tr>
+    <tr><td>APB1</td><td><code>RCC-&gt;APB1ENR</code></td><td>USART2</td><td><code>RCC_APB1ENR_USART2EN</code></td></tr>
+    <tr><td>APB2</td><td><code>RCC-&gt;APB2ENR</code></td><td>ADC1, SYSCFG</td><td><code>RCC_APB2ENR_ADC1EN</code>, <code>RCC_APB2ENR_SYSCFGEN</code></td></tr>
+  </table>
+
+  <h4>GPIO port registers (offset from port base)</h4>
+  <table>
+    <tr><th>Reg</th><th>Offset</th><th>Purpose</th><th>Values</th></tr>
+    <tr><td><code>MODER</code></td><td>0x00</td><td>Pin mode (2 bits/pin)</td><td><code>00</code> input · <code>01</code> output · <code>10</code> alternate · <code>11</code> analog</td></tr>
+    <tr><td><code>OTYPER</code></td><td>0x04</td><td>Output type (1 bit/pin)</td><td><code>0</code> push-pull · <code>1</code> open-drain</td></tr>
+    <tr><td><code>OSPEEDR</code></td><td>0x08</td><td>Output speed (2 bits/pin)</td><td>low→very high</td></tr>
+    <tr><td><code>PUPDR</code></td><td>0x0C</td><td>Pull resistor (2 bits/pin)</td><td><code>00</code> none · <code>01</code> pull-up · <code>10</code> pull-down</td></tr>
+    <tr><td><code>IDR</code></td><td>0x10</td><td>Input data (read-only)</td><td>read pin state</td></tr>
+    <tr><td><code>ODR</code></td><td>0x14</td><td>Output data</td><td>write pin state</td></tr>
+    <tr><td><code>AFR[0]/AFR[1]</code></td><td>0x20/0x24</td><td>Alternate function (4 bits/pin)</td><td>AFR[0]=pins 0–7, AFR[1]=pins 8–15</td></tr>
+  </table>
+
+  <h4>Base addresses (from the slides)</h4>
+  <table>
+    <tr><th>Peripheral</th><th>Base</th></tr>
+    <tr><td>GPIOA</td><td><code>0x40020000</code></td></tr>
+    <tr><td>GPIOB</td><td><code>0x40020400</code></td></tr>
+    <tr><td>RCC</td><td><code>0x40023800</code> (AHB1ENR at offset <code>0x30</code>)</td></tr>
+  </table>
+
+  <div class="box exam"><span class="lbl">The golden rule of multi-bit fields</span>
+    To set a 2-bit or 4-bit field, <span class="hl">clear it first, then set it</span> — otherwise old bits linger and corrupt the value:
+    <pre><code><span class="reg">GPIOA</span>->MODER &= ~(<span class="num">0b11</span> &lt;&lt; (pin*<span class="num">2</span>));   <span class="cm">// 1. clear the field</span>
+<span class="reg">GPIOA</span>->MODER |=  (<span class="num">0b10</span> &lt;&lt; (pin*<span class="num">2</span>));   <span class="cm">// 2. set new value</span></code></pre>
+    For single-bit fields (like <code>ODR</code>) you can just <code>|=</code> to set, <code>&amp;= ~</code> to clear, <code>^=</code> to toggle.</div>
+</section>
+
+<!-- ================= CHAPTER 0 ================= -->
+<section id="ch0">
+  <h2 class="ch">Chapter 0 — Foundations</h2>
+  <p>Before touching a register you need the mental model of what a microcontroller <i>is</i>.</p>
+
+  <h3 id="ch0-cpu">CPU, memory, and peripherals</h3>
+  <p>An embedded system is a computer built into a device to do one job. Inside the MCU:</p>
+  <ul>
+    <li><b>CPU (Cortex-M4)</b> — executes instructions from Flash. Default clock 16 MHz.</li>
+    <li><b>Flash (512 KB)</b> — non-volatile; holds your program (ROM-like).</li>
+    <li><b>SRAM (128 KB)</b> — volatile; holds variables at runtime.</li>
+    <li><b>Peripherals</b> — hardware blocks (GPIO, UART, ADC, timers…) that the CPU controls through registers.</li>
+    <li><b>Buses (AHB/APB)</b> — connect the CPU to peripherals; each peripheral hangs off a specific bus, which is why its clock lives in a specific <code>RCC</code> register.</li>
+  </ul>
+
+  <h3 id="ch0-mmio">Memory-mapped I/O</h3>
+  <div class="box key"><span class="lbl">Core idea</span>
+    Every peripheral register is just a <span class="hl">memory address</span>. Writing to that address changes hardware; reading it senses hardware. That's why controlling an LED looks like writing to memory: <code>GPIOA-&gt;ODR |= (1&lt;&lt;5);</code></div>
+  <p>The CMSIS header <code>stm32f4xx.h</code> maps friendly names onto those addresses. <code>GPIOA</code> is a pointer to a struct laid out exactly like the register block, so <code>GPIOA-&gt;MODER</code> resolves to address <code>0x40020000</code>.</p>
+
+  <h3 id="ch0-bits">Bit manipulation — the essential toolkit</h3>
+  <table>
+    <tr><th>Goal</th><th>Operation</th><th>Idiom</th></tr>
+    <tr><td>Set bit <i>n</i></td><td>OR</td><td><code>REG |= (1 &lt;&lt; n);</code></td></tr>
+    <tr><td>Clear bit <i>n</i></td><td>AND-NOT</td><td><code>REG &amp;= ~(1 &lt;&lt; n);</code></td></tr>
+    <tr><td>Toggle bit <i>n</i></td><td>XOR</td><td><code>REG ^= (1 &lt;&lt; n);</code></td></tr>
+    <tr><td>Test bit <i>n</i></td><td>AND</td><td><code>if (REG &amp; (1 &lt;&lt; n))</code></td></tr>
+    <tr><td>Write multi-bit field</td><td>clear then set</td><td><code>REG &amp;= ~(mask); REG |= (val &lt;&lt; pos);</code></td></tr>
+  </table>
+  <div class="box exam"><span class="lbl">Exam favorite</span>
+    You <span class="hl">will</span> be asked to fill in bit operations. Memorize: <code>|=</code> set, <code>&amp;= ~</code> clear, <code>^=</code> toggle, <code>&amp;</code> test.</div>
+</section>
+
+<!-- ================= CHAPTER 1 ================= -->
+<section id="ch1">
+  <h2 class="ch">Chapter 1 — GPIO (Digital Input/Output)</h2>
+  <p>GPIO = General-Purpose Input/Output. These pins read buttons and drive LEDs. This chapter establishes the 4-step pattern used forever after.</p>
+
+  <h3 id="ch1-clock">Step 1 — Clock gating (RCC)</h3>
+  <div class="box warn"><span class="lbl">#1 cause of "my code does nothing"</span>
+    Peripherals boot with their clock <span class="hl">off</span> to save power. Writing to a peripheral register before enabling its clock silently does nothing. Always enable first:
+    <pre><code><span class="reg">RCC</span>->AHB1ENR |= <span class="reg">RCC_AHB1ENR_GPIOAEN</span>;   <span class="cm">// turn on GPIOA</span></code></pre></div>
+
+  <h3 id="ch1-registers">Step 2 — GPIO registers</h3>
+  <p>See the <a href="#cheatsheet">cheat-sheet</a> for the full table. The one you configure first is always <code>MODER</code>.</p>
+  <div class="box key"><span class="lbl">MODER values (2 bits per pin)</span>
+    <span class="pill b">00 Input</span> <span class="pill g">01 Output</span> <span class="pill a">10 Alternate function</span> <span class="pill r">11 Analog</span></div>
+
+  <h3 id="ch1-output">Lab 1.2 — Output: blinking an LED</h3>
+  <p>Blue LED is on PA5. Set PA5 as output, then toggle <code>ODR</code> in a loop with a delay.</p>
+  <pre><code><span class="cm">// 1. clock</span>
+<span class="reg">RCC</span>->AHB1ENR |= <span class="reg">RCC_AHB1ENR_GPIOAEN</span>;
+<span class="cm">// 2. PA5 as output (clear then set)</span>
+<span class="reg">GPIOA</span>->MODER &= ~<span class="reg">GPIO_MODER_MODER5</span>;
+<span class="reg">GPIOA</span>->MODER |= (<span class="num">0b01</span> &lt;&lt; <span class="reg">GPIO_MODER_MODER5_Pos</span>);
+<span class="kw">while</span>(<span class="num">1</span>){
+    <span class="reg">GPIOA</span>->ODR ^= <span class="reg">GPIO_ODR_OD5</span>;   <span class="cm">// toggle</span>
+    DELAY_SEC;                     <span class="cm">// software delay</span>
+}</code></pre>
+  <div class="box tip"><span class="lbl">Software delay</span>
+    A busy for-loop wastes cycles counting. The slides count ~12 machine instructions per iteration and wrap it in a <code>DELAY_SEC</code> macro. It "works" but blocks the CPU — remember this pain; Ch 5 (interrupts) fixes it.</div>
+
+  <h3 id="ch1-input">Labs 1.3/1.4 — Input & pull-up/pull-down</h3>
+  <p>Read a button through <code>IDR</code> (input data register, read-only). A floating input pin picks up noise, so you must tie it with an internal resistor via <code>PUPDR</code>.</p>
+  <table>
+    <tr><th>PUPDR</th><th>Meaning</th><th>Use when…</th></tr>
+    <tr><td><code>01</code> pull-up</td><td>pin idles HIGH, button pulls it LOW</td><td>button wired to GND</td></tr>
+    <tr><td><code>10</code> pull-down</td><td>pin idles LOW, button pulls it HIGH</td><td>button wired to VCC</td></tr>
+  </table>
+  <pre><code><span class="kw">if</span>((<span class="reg">GPIOB</span>->IDR & <span class="reg">GPIO_IDR_ID4</span>) == <span class="num">0</span>){   <span class="cm">// pressed (active-low)</span>
+    <span class="reg">GPIOA</span>->ODR |= <span class="reg">GPIO_ODR_OD5</span>;
+} <span class="kw">else</span> {
+    <span class="reg">GPIOA</span>->ODR &= ~<span class="reg">GPIO_ODR_OD5</span>;
+}</code></pre>
+
+  <h3 id="ch1-polling">Lab 1.5 — Polling & the danger of blocking</h3>
+  <p><b>Polling</b> = repeatedly checking a condition in a loop. Simple, but if the loop contains a <b>blocking</b> function (like a long delay), the CPU can't do anything else.</p>
+  <div class="box warn"><span class="lbl">Why blocking is dangerous</span>
+    <ul>
+      <li><b>Missed deadlines</b> — you're stuck delaying while a real event happens.</li>
+      <li><b>Watchdog (WDT) resets</b> — a stuck loop can trip the watchdog.</li>
+      <li><b>High power</b> — the CPU spins at full speed doing nothing.</li>
+    </ul>
+    This motivates <a href="#ch5">interrupts</a> in Chapter 5.</div>
+
+  <h3 id="ch1-regdef">The register-definition file</h3>
+  <p>Instead of raw addresses, the labs use CMSIS. Two lines unlock it:</p>
+  <pre><code><span class="cm">#define STM32F411xE</span>
+<span class="cm">#include "stm32f4xx.h"</span></code></pre>
+  <ul>
+    <li>Access a register: <code>PERIPHERAL-&gt;REGISTER</code> e.g. <code>GPIOA-&gt;MODER</code></li>
+    <li>Bit mask macro: <code>PERIPHERAL_REGISTER_BITNAME</code> e.g. <code>GPIO_MODER_MODER5</code></li>
+    <li>Bit position macro: append <code>_Pos</code> e.g. <code>GPIO_MODER_MODER5_Pos</code></li>
+  </ul>
+  <div class="box tip"><span class="lbl">Reading the naming</span>
+    <code>GPIO_ODR_OD5</code> = the mask for output-data bit 5. <code>&lt;&lt; ..._Pos</code> shifts your value to the right place. Use the plain mask to set/clear a whole field, use <code>_Pos</code> when writing a specific value into a multi-bit field.</div>
+</section>
+
+<!-- ================= CHAPTER 3 ================= -->
+<section id="ch3">
+  <h2 class="ch">Chapter 3 — UART (Serial Communication)</h2>
+  <p>UART = Universal Asynchronous Receiver/Transmitter. It's how the board talks to your PC over the USB cable. <b>Serial</b> (one bit at a time) and <b>asynchronous</b> (no shared clock — both sides just agree on speed).</p>
+
+  <h3 id="ch3-frame">Frames, baud rate & the physical link</h3>
+  <ul>
+    <li>Two wires: <b>Tx</b> (transmit) and <b>Rx</b> (receive). Tx of one device → Rx of the other.</li>
+    <li>A <b>frame</b> = Start bit (0) + 5–9 data bits + optional parity + Stop bit(s) (1 / 1.5 / 2).</li>
+    <li>Data is sent <span class="hl">LSB first</span>.</li>
+    <li><b>Baud rate</b> = bits per second; both sides must match (commonly <b>115200</b> or 9600).</li>
+    <li><b>Oversampling</b> (8× or 16×): the receiver samples each bit multiple times and takes a majority vote for noise immunity.</li>
+    <li><b>Parity</b> (even/odd): a check bit that <i>detects</i> a single-bit error but cannot correct it.</li>
+  </ul>
+  <div class="box note"><span class="lbl">"8-N-1"</span>
+    The terminal setting you'll use: 8 data bits, No parity, 1 stop bit. Characters are ASCII: <code>'A'</code>=65, <code>'K'</code>=75.</div>
+
+  <h3 id="ch3-registers">USART2 registers & pins</h3>
+  <p>On the Nucleo, USART2 is wired to the ST-Link USB virtual COM port. Its pins:</p>
+  <table>
+    <tr><th>Pin</th><th>Role</th><th>Alternate function</th></tr>
+    <tr><td>PA2</td><td>USART2 Tx</td><td>AF07 (<code>AF7</code>)</td></tr>
+    <tr><td>PA3</td><td>USART2 Rx</td><td>AF07</td></tr>
+  </table>
+  <table>
+    <tr><th>Register</th><th>Key bits</th><th>Meaning</th></tr>
+    <tr><td><code>CR1</code></td><td><code>UE</code></td><td>USART enable (master switch)</td></tr>
+    <tr><td><code>CR1</code></td><td><code>M</code></td><td>word length: 0 = 8 data bits</td></tr>
+    <tr><td><code>CR1</code></td><td><code>TE</code> / <code>RE</code></td><td>transmitter / receiver enable</td></tr>
+    <tr><td><code>CR2</code></td><td><code>STOP</code></td><td>number of stop bits (0 = 1 stop)</td></tr>
+    <tr><td><code>BRR</code></td><td>—</td><td>baud rate divisor (computed from clock & baud)</td></tr>
+    <tr><td><code>DR</code></td><td>—</td><td>data register: write = send, read = receive</td></tr>
+    <tr><td><code>SR</code></td><td><code>TXE</code></td><td>Tx empty — safe to write next byte</td></tr>
+    <tr><td><code>SR</code></td><td><code>RXNE</code></td><td>Rx not empty — a byte has arrived</td></tr>
+    <tr><td><code>SR</code></td><td><code>TC</code></td><td>transmission complete</td></tr>
+  </table>
+
+  <h3 id="ch3-tx">Lab 3.1 — Transmitting a byte</h3>
+  <p>Send the letter <code>'K'</code> (ASCII 75) once per second. Setup PA2 to alternate-function 7, configure USART2, then write to <code>DR</code>.</p>
+  <pre><code><span class="cm">#define UART_DATA_ASCII (75U)   // 'K'</span>
+
+<span class="cm">// PA2 -> alternate function 7 (USART2_Tx)</span>
+<span class="reg">GPIOA</span>->MODER &= ~<span class="reg">GPIO_MODER_MODER2</span>;
+<span class="reg">GPIOA</span>->MODER |= (<span class="num">0b10</span> &lt;&lt; <span class="reg">GPIO_MODER_MODER2_Pos</span>);   <span class="cm">// 10 = alternate</span>
+<span class="reg">GPIOA</span>->AFR[<span class="num">0</span>] |= (<span class="num">7</span> &lt;&lt; <span class="reg">GPIO_AFRL_AFSEL2_Pos</span>);      <span class="cm">// AF7</span>
+
+<span class="cm">// USART2 setup</span>
+<span class="reg">USART2</span>->CR1 |= <span class="reg">USART_CR1_UE</span>;      <span class="cm">// enable</span>
+<span class="reg">USART2</span>->CR1 &= ~<span class="reg">USART_CR1_M</span>;     <span class="cm">// 8 data bits</span>
+<span class="reg">USART2</span>->CR2 &= ~<span class="reg">USART_CR2_STOP</span>;  <span class="cm">// 1 stop bit</span>
+<span class="reg">USART2</span>->BRR = <span class="num">139</span>;               <span class="cm">// baud divisor (115200 @ 16MHz)</span>
+<span class="reg">USART2</span>->CR1 |= <span class="reg">USART_CR1_TE</span>;      <span class="cm">// enable transmitter</span>
+
+<span class="kw">while</span>(<span class="num">1</span>){
+    <span class="reg">USART2</span>->DR = UART_DATA_ASCII;
+    DELAY_SEC;
+}</code></pre>
+  <div class="box tip"><span class="lbl">Seeing the output</span>
+    Open a serial terminal (PuTTY, Tera Term, CoolTerm, or <a href="https://serialterminal.com">serialterminal.com</a>), connect to "STMicroelectronics ST-Link Virtual COM Port", set <b>115200 baud, 8-N-1</b>. You should see a stream of <code>K</code>.</div>
+
+  <h3 id="ch3-strings">Strings in C & sprintf</h3>
+  <p>A C string is a <code>char</code> array ending in the null terminator <code>'\0'</code>. <code>char s[]="Hi"</code> auto-sizes to 3 (H, i, \0).</p>
+  <p>To send a whole string, loop until the null terminator, waiting for <code>TXE</code> before each byte:</p>
+  <pre><code><span class="kw">static void</span> <span class="fn">UART2_TxString</span>(<span class="kw">char</span> strOut[]){
+    <span class="kw">for</span>(<span class="kw">uint8_t</span> idx=<span class="num">0</span>; strOut[idx] != <span class="str">'\0'</span>; idx++){
+        <span class="kw">while</span>((<span class="reg">USART2</span>->SR & <span class="reg">USART_SR_TXE</span>) == <span class="num">0</span>);  <span class="cm">// wait until Tx ready</span>
+        <span class="reg">USART2</span>->DR = strOut[idx];
+    }
+}</code></pre>
+  <div class="box key"><span class="lbl">Why wait for TXE?</span>
+    <code>TXE=1</code> means the data register is empty and it's safe to write the next byte. Writing before that would overwrite a byte still being sent. Writing to <code>DR</code> clears <code>TXE</code> automatically.</div>
+  <p><b>sprintf</b> formats values into a string buffer so you can send numbers:</p>
+  <pre><code><span class="kw">char</span> buf[<span class="num">50</span>];
+<span class="fn">sprintf</span>(buf, <span class="str">"Sensor data = %d\n"</span>, sensorValue);   <span class="cm">// %d decimal</span>
+<span class="fn">sprintf</span>(buf, <span class="str">"O2: 0x%x"</span>, oxygen);                  <span class="cm">// %x hex, %c char</span>
+<span class="fn">UART2_TxString</span>(buf);</code></pre>
+
+  <h3 id="ch3-rx">Labs 3.3 / 3.4 — Receiving & echo</h3>
+  <p>Enable the receiver (<code>RE</code>) and set up PA3 as AF7. Poll <code>RXNE</code>; when set, <code>DR</code> holds the received byte.</p>
+  <pre><code><span class="reg">USART2</span>->CR1 |= <span class="reg">USART_CR1_RE</span>;   <span class="cm">// enable receiver</span>
+
+<span class="kw">if</span>((<span class="reg">USART2</span>->SR & <span class="reg">USART_SR_RXNE</span>) != <span class="num">0</span>){
+    <span class="kw">char</span> c = <span class="reg">USART2</span>->DR;   <span class="cm">// reading DR clears RXNE</span>
+    <span class="fn">sprintf</span>(buf, <span class="str">"You've entered: %c\n\r"</span>, c);   <span class="cm">// echo (Lab 3.4)</span>
+    <span class="fn">UART2_TxString</span>(buf);
+    <span class="kw">if</span>(c == <span class="str">'1'</span>) <span class="reg">GPIOB</span>->ODR |= <span class="reg">GPIO_ODR_OD6</span>;   <span class="cm">// green LED on</span>
+    <span class="kw">else</span>        <span class="reg">GPIOB</span>->ODR &= ~<span class="reg">GPIO_ODR_OD6</span>;
+}</code></pre>
+  <div class="box exam"><span class="lbl">Remember for the exam</span>
+    <b>Tx side</b> waits on <code>TXE</code>; <b>Rx side</b> waits on <code>RXNE</code>. Reading <code>DR</code> clears <code>RXNE</code>; writing <code>DR</code> clears <code>TXE</code>. These flags come back in Ch 5 as interrupt sources.</div>
+</section>
+
+<!-- ================= CHAPTER 4 ================= -->
+<section id="ch4">
+  <h2 class="ch">Chapter 4 — ADC (Analog-to-Digital Conversion)</h2>
+  <p>Sensors output continuous <b>analog</b> voltages; the CPU only understands <b>digital</b> numbers. The ADC bridges them.</p>
+
+  <h3 id="ch4-basics">ADC fundamentals</h3>
+  <ul>
+    <li><b>Analog</b> = continuous (any voltage). <b>Digital</b> = discrete steps.</li>
+    <li>Conversion process: <b>Sample &amp; Hold</b> → <b>Quantizer</b> → <b>Encoder</b>.</li>
+    <li><b>Resolution</b> (bits): more bits = finer steps. STM32F411RE = <span class="hl">12-bit</span> → values 0–4095.</li>
+    <li><b>V<sub>ref</sub></b>: the voltage that maps to the maximum code (3.3 V here).</li>
+    <li><b>Sample time</b>: how long the input is sampled — longer is more accurate for high-impedance sources.</li>
+  </ul>
+  <div class="box key"><span class="lbl">The conversion formula — memorize this</span>
+    <div class="formula">Digital = floor[ V<sub>in</sub> / V<sub>ref</sub> × (2<sup>n</sup> − 1) ]</div>
+    Example: 12-bit, V<sub>ref</sub>=3.3 V, V<sub>in</sub>=2.14 V → floor(2.14/3.3 × 4095) = floor(2655.2) = <b>2655</b>.</div>
+
+  <h3 id="ch4-registers">ADC on STM32F411RE & its registers</h3>
+  <p>One ADC module (<b>ADC1</b>), 12-bit SAR type, up to 16 external channels. Channels map to pins: PA0→ch0, PA1→ch1, … PA7→ch7 (the "Additional Functions" column of the datasheet).</p>
+  <table>
+    <tr><th>Register</th><th>Key field</th><th>Purpose</th></tr>
+    <tr><td><code>CR2</code></td><td><code>ADON</code></td><td>turn the ADC on</td></tr>
+    <tr><td><code>CR2</code></td><td><code>SWSTART</code></td><td>start a conversion in software</td></tr>
+    <tr><td><code>SMPR2</code></td><td><code>SMP4</code></td><td>sample time for channel 4 (<code>0b111</code> = 480 cycles)</td></tr>
+    <tr><td><code>SQR1</code></td><td><code>L</code></td><td>number of conversions in the sequence (1 = single)</td></tr>
+    <tr><td><code>SQR3</code></td><td><code>SQ1</code></td><td>which channel is converted first</td></tr>
+    <tr><td><code>SR</code></td><td><code>EOC</code></td><td>End Of Conversion flag — result ready</td></tr>
+    <tr><td><code>DR</code></td><td>—</td><td>16-bit conversion result</td></tr>
+    <tr><td><code>CR1</code></td><td><code>EOCIE</code></td><td>EOC interrupt enable (used in Ch 5)</td></tr>
+  </table>
+
+  <h3 id="ch4-lab41">Lab 4.1 — Reading the potentiometer</h3>
+  <p>Potentiometer on PA4 (channel 4). Read it by polling; light PA5 when the value crosses the midpoint (2048).</p>
+  <pre><code><span class="reg">RCC</span>->AHB1ENR |= <span class="reg">RCC_AHB1ENR_GPIOAEN</span>;
+<span class="reg">RCC</span>->APB2ENR |= <span class="reg">RCC_APB2ENR_ADC1EN</span>;    <span class="cm">// ADC clock is on APB2!</span>
+
+<span class="cm">// PA4 as analog (11)</span>
+<span class="reg">GPIOA</span>->MODER &= ~<span class="reg">GPIO_MODER_MODER4</span>;
+<span class="reg">GPIOA</span>->MODER |= (<span class="num">0b11</span> &lt;&lt; <span class="reg">GPIO_MODER_MODER4_Pos</span>);
+
+<span class="reg">ADC1</span>->CR2   |= <span class="reg">ADC_CR2_ADON</span>;              <span class="cm">// enable ADC</span>
+<span class="reg">ADC1</span>->SMPR2 |= <span class="reg">ADC_SMPR2_SMP4</span>;            <span class="cm">// 480-cycle sample time</span>
+<span class="reg">ADC1</span>->SQR1 &= ~<span class="reg">ADC_SQR1_L</span>;               <span class="cm">// L = 0 -> 1 conversion</span>
+<span class="reg">ADC1</span>->SQR3 &= ~<span class="reg">ADC_SQR3_SQ1</span>;
+<span class="reg">ADC1</span>->SQR3 |= (<span class="num">4</span> &lt;&lt; <span class="reg">ADC_SQR3_SQ1_Pos</span>);   <span class="cm">// first conversion = channel 4</span>
+
+<span class="kw">while</span>(<span class="num">1</span>){
+    <span class="reg">ADC1</span>->CR2 |= <span class="reg">ADC_CR2_SWSTART</span>;             <span class="cm">// start</span>
+    <span class="kw">while</span>((<span class="reg">ADC1</span>->SR & <span class="reg">ADC_SR_EOC</span>) == <span class="num">0</span>);   <span class="cm">// wait for result</span>
+    <span class="kw">if</span>(<span class="reg">ADC1</span>->DR &gt; <span class="num">2048</span>) <span class="reg">GPIOA</span>->ODR |= <span class="reg">GPIO_ODR_OD5</span>;
+    <span class="kw">else</span>               <span class="reg">GPIOA</span>->ODR &= ~<span class="reg">GPIO_ODR_OD5</span>;
+}</code></pre>
+  <div class="box warn"><span class="lbl">Slide typo to watch</span>
+    The register summary table (4.pdf p.28) prints "MODER5" for "set PA4 to analog" — that's a <b>typo</b>. The correct bit is <code>MODER4</code> (the assignment code on p.29 uses <code>GPIO_MODER_MODER4</code>). Trust the code.</div>
+
+  <h3 id="ch4-ntc">NTC thermistor — turning volts into °C</h3>
+  <p>An <b>NTC</b> thermistor's resistance <i>decreases</i> as temperature rises. Wired as a voltage divider (R16 = 10 kΩ fixed, R23 = MF52 NTC), the ADC reads the midpoint voltage.</p>
+  <div class="formula">R<sub>NTC</sub> = R<sub>x</sub> × ( V<sub>out</sub> / (V<sub>cc</sub> − V<sub>out</sub>) )</div>
+  <p>Then convert resistance to temperature. Two models exist — the <b>Beta equation</b> (preferred in embedded for simplicity) and the more accurate Steinhart-Hart:</p>
+  <div class="formula">T = (β · T<sub>0</sub>) / ( T<sub>0</sub> · ln(R<sub>NTC</sub>/R<sub>0</sub>) + β )   [Kelvin]</div>
+
+  <h3 id="ch4-lab42">Lab 4.2 — Reading temperature</h3>
+  <p>Print temperature every second. Uses PA0 (channel 0) as analog input and floating-point math — which means you must enable the FPU first.</p>
+  <pre><code><span class="cm">#define VREF 3.3f
+#define VCC  3.3f
+#define ADC_MAXRES 4095.0f
+#define RX   10000.0f
+#define R0   10000.0f
+#define T0   298.15f    // 25°C in Kelvin
+#define BETA 3950.0f</span>
+
+<span class="kw">float</span> adc_voltage = (<span class="reg">ADC1</span>->DR * VREF) / ADC_MAXRES;
+<span class="kw">float</span> r_ntc = RX * adc_voltage / (VCC - adc_voltage);
+<span class="kw">float</span> temperature = ((BETA * T0) / (T0*<span class="fn">log</span>(r_ntc/R0) + BETA)) - <span class="num">273.15f</span>;
+<span class="fn">sprintf</span>(buf, <span class="str">"Temperature = %d millidegree Celcius\n"</span>, (<span class="kw">int32_t</span>)(temperature*<span class="num">1000.0f</span>));</code></pre>
+
+  <h3 id="ch4-fpu">The Floating-Point Unit (FPU)</h3>
+  <p>The Cortex-M4 has dedicated hardware for IEEE-754 single-precision float math: 5–10× faster, more accurate, lower power, and no bulky software math library. But it boots <b>disabled</b>.</p>
+  <div class="box key"><span class="lbl">Enable the FPU before any float math</span>
+    Set full access for coprocessors 10 and 11 (bits 20–23 of <code>CPACR</code>) to <code>0b11</code> each:
+    <pre><code><span class="reg">SCB</span>->CPACR |= (<span class="num">0b1111</span> &lt;&lt; <span class="num">20</span>);   <span class="cm">// CP10 & CP11 = full access</span>
+<span class="fn">__asm</span> <span class="kw">volatile</span>(<span class="str">"dsb"</span>);        <span class="cm">// data sync barrier</span>
+<span class="fn">__asm</span> <span class="kw">volatile</span>(<span class="str">"isb"</span>);        <span class="cm">// instruction sync barrier</span></code></pre>
+    Forget this and float code will <span class="hl">hard-fault</span>.</div>
+
+  <h3 id="ch4-ldr">LDR — Light Dependent Resistor (Lab 4.3)</h3>
+  <p>An LDR (photoresistor) is a passive part whose resistance <b>decreases as light increases</b>. Same voltage-divider trick as the NTC (R16 = 10 kΩ fixed, R22 = GL5528 LDR):</p>
+  <div class="formula">R<sub>LDR</sub> = R<sub>x</sub> × ( V<sub>out</sub> / (V<sub>cc</sub> − V<sub>out</sub>) )</div>
+  <p>Lab 4.3 prints <code>Light intensity = … Lux</code> every second and turns the blue LED on when the LDR is covered (dark). It reuses the exact ADC + FPU + sprintf pattern from Lab 4.2.</p>
+</section>
+
+<!-- ================= CHAPTER 5 ================= -->
+<section id="ch5">
+  <h2 class="ch">Chapter 5 — Interrupts</h2>
+  <p>The payoff chapter. Instead of the CPU wasting time <a href="#ch1-polling">polling</a>, an interrupt lets hardware <i>call you</i> only when something happens.</p>
+
+  <h3 id="ch5-why">Why interrupts?</h3>
+  <div class="box key"><span class="lbl">Definition</span>
+    An <b>interrupt</b> is a signal that temporarily stops the CPU's current task and forces it to run a special function — the <span class="hl">Interrupt Service Routine (ISR)</span>. When the ISR finishes, the CPU resumes exactly where it left off.</div>
+  <p>The slides' analogy: a boy doing homework while waiting for food.</p>
+  <ul>
+    <li><b>No doorbell (polling)</b> — he keeps running to the door to check. Wastes time and energy, and he might miss homework deadlines.</li>
+    <li><b>With a doorbell (interrupt)</b> — he focuses on homework and only gets up when the bell rings. The bell = interrupt source, its ring = interrupt request.</li>
+  </ul>
+  <div class="box tip"><span class="lbl">Interrupt vs polling</span>
+    Polling: CPU constantly checks (simple, wasteful). Interrupt: CPU sleeps/does other work and reacts on demand (efficient, lower power). In interrupt code the <code>while(1)</code> loop is usually empty.</div>
+
+  <h3 id="ch5-nvic">The NVIC (Nested Vectored Interrupt Controller)</h3>
+  <p>The NVIC is hardware inside the Cortex-M4 that manages all interrupts. It decides which interrupts are <b>enabled</b>, their <b>priority</b>, and supports <b>nesting</b> (a higher-priority interrupt can interrupt a lower one).</p>
+  <h4>General flow</h4>
+  <ol>
+    <li>Peripheral triggers an interrupt request (IRQ).</li>
+    <li>NVIC detects it.</li>
+    <li>If enabled and nothing higher-priority is pending, the NVIC:
+      <ol><li>saves the current program state (PC, PSR…) to the stack,</li>
+      <li>jumps to the ISR address from the vector table.</li></ol></li>
+    <li>After the ISR, an <b>exception return</b> restores the saved state.</li>
+  </ol>
+  <div class="box note"><span class="lbl">Priority in practice</span>
+    If the CPU is in a high-priority ISR (A) and a lower one (B) fires, B <b>waits</b> until A finishes. If the CPU is in a low-priority ISR (B) and a higher one (A) fires, A <b>preempts</b> B (nesting); when A returns, B resumes. <span class="hl">Lower priority number = higher urgency.</span></div>
+
+  <h3 id="ch5-isr">Enabling interrupts (CMSIS) & writing an ISR</h3>
+  <p>You enable an interrupt with a <b>CMSIS</b> function and the peripheral's <b>IRQ number</b> (from the vector table, "Position" column of RM0383 Table 37). USART2's IRQ number is 38.</p>
+  <table>
+    <tr><th>CMSIS function</th><th>Does</th></tr>
+    <tr><td><code>NVIC_EnableIRQ(IRQn)</code></td><td>enable an interrupt</td></tr>
+    <tr><td><code>NVIC_DisableIRQ(IRQn)</code></td><td>disable it</td></tr>
+    <tr><td><code>NVIC_SetPriority(IRQn, p)</code></td><td>set its priority</td></tr>
+    <tr><td><code>NVIC_SetPendingIRQ / ClearPendingIRQ</code></td><td>force / clear a pending request</td></tr>
+  </table>
+  <pre><code><span class="fn">NVIC_EnableIRQ</span>(<span class="num">38</span>);              <span class="cm">// by number…</span>
+<span class="fn">NVIC_EnableIRQ</span>(<span class="reg">USART2_IRQn</span>);    <span class="cm">// …or the readable macro (preferred)</span></code></pre>
+  <div class="box key"><span class="lbl">ISR naming is fixed by CMSIS</span>
+    An ISR is a <code>void</code> function with <b>no arguments and no return value</b>, and its name must be exactly <code>&lt;Acronym&gt;_IRQHandler</code>:
+    <pre><code><span class="kw">void</span> <span class="fn">USART2_IRQHandler</span>(<span class="kw">void</span>){
+    <span class="cm">// handle the interrupt, clear the source</span>
+}</code></pre>
+    The name links your function into the vector table so the CPU finds it. A typo = your ISR never runs.</div>
+
+  <h3 id="ch5-lab51">Lab 5.1 — UART Rx interrupt</h3>
+  <p>Convert the polled receive lab into an interrupt-driven one. The <code>while(1)</code> becomes empty; the LED logic moves into the ISR.</p>
+  <p><b>How to trigger it:</b> per the reference manual, when a byte arrives and <code>RXNEIE</code> (Rx-not-empty interrupt enable, in <code>CR1</code>) is set, an interrupt is generated.</p>
+  <pre><code><span class="kw">void</span> <span class="fn">USART2_IRQHandler</span>(<span class="kw">void</span>){
+    <span class="kw">if</span>((<span class="reg">USART2</span>->SR & <span class="reg">USART_SR_RXNE</span>) != <span class="num">0</span>){
+        <span class="kw">if</span>(<span class="reg">USART2</span>->DR == <span class="str">'1'</span>) <span class="reg">GPIOA</span>->ODR |= <span class="reg">GPIO_ODR_OD5</span>;
+        <span class="kw">else</span>                   <span class="reg">GPIOA</span>->ODR &= ~<span class="reg">GPIO_ODR_OD5</span>;
+    }
+}
+<span class="cm">// in main, after normal USART setup:</span>
+<span class="reg">USART2</span>->CR1 |= <span class="reg">USART_CR1_RXNEIE</span>;   <span class="cm">// enable Rx interrupt</span>
+<span class="reg">USART2</span>->CR1 |= <span class="reg">USART_CR1_RE</span>;
+<span class="fn">NVIC_EnableIRQ</span>(<span class="reg">USART2_IRQn</span>);
+<span class="fn">NVIC_SetPriority</span>(<span class="reg">USART2_IRQn</span>, <span class="num">0</span>);
+<span class="kw">while</span>(<span class="num">1</span>){}   <span class="cm">// empty!</span></code></pre>
+
+  <h3 id="ch5-lab52">Lab 5.2 — ADC End-of-Conversion interrupt</h3>
+  <p>Same idea for the ADC. Per the manual, when a conversion completes and <code>EOCIE</code> (in <code>CR1</code>) is set, an interrupt fires. The <code>while(1)</code> keeps only "start conversion + delay ~100 ms"; the read-and-decide logic moves into the ISR.</p>
+  <pre><code><span class="kw">void</span> <span class="fn">ADC_IRQHandler</span>(<span class="kw">void</span>){
+    <span class="kw">if</span>((<span class="reg">ADC1</span>->SR & <span class="reg">ADC_SR_EOC</span>) != <span class="num">0</span>){
+        <span class="kw">if</span>(<span class="reg">ADC1</span>->DR &lt;= <span class="num">2048</span>) <span class="reg">GPIOA</span>->ODR |= <span class="reg">GPIO_ODR_OD5</span>;
+        <span class="kw">else</span>                 <span class="reg">GPIOA</span>->ODR &= ~<span class="reg">GPIO_ODR_OD5</span>;
+    }
+}
+<span class="cm">// setup:</span>
+<span class="reg">ADC1</span>->CR1 |= <span class="reg">ADC_CR1_EOCIE</span>;   <span class="cm">// enable EOC interrupt</span>
+<span class="fn">NVIC_EnableIRQ</span>(<span class="reg">ADC_IRQn</span>);
+<span class="fn">NVIC_SetPriority</span>(<span class="reg">ADC_IRQn</span>, <span class="num">0</span>);</code></pre>
+  <div class="box tip"><span class="lbl">Pattern recognition</span>
+    Every "convert polling to interrupt" lab is the same three edits: (1) enable the peripheral's interrupt-enable bit (<code>RXNEIE</code> / <code>EOCIE</code>), (2) <code>NVIC_EnableIRQ</code> the right IRQ, (3) move the reaction code into the correctly-named <code>_IRQHandler</code>.</div>
+
+  <h3 id="ch5-exti">EXTI — External Interrupts (from GPIO pins)</h3>
+  <p>The <b>EXTI</b> (External Interrupt/Event Controller) lets a <b>GPIO pin</b> raise an interrupt on an edge — so a button press interrupts the CPU instead of being polled.</p>
+  <h4>Key components</h4>
+  <ul>
+    <li><b>Edge detect circuit</b> — senses a transition on the input line.</li>
+    <li><b>Trigger selection (RTSR / FTSR)</b> — rising edge, falling edge, or both.</li>
+    <li><b>Interrupt mask register (IMR)</b> — enables/disables the EXTI line's interrupt.</li>
+    <li><b>Pending register (PR)</b> — flags which line fired; <span class="hl">you must clear it in the ISR</span> by writing 1.</li>
+  </ul>
+  <div class="box key"><span class="lbl">Line ↔ pin mapping</span>
+    21 EXTI lines. <b>Lines 0–15 map to GPIO pin numbers 0–15</b>. A line can take that pin from any port, but only one port at a time — chosen in the <code>SYSCFG_EXTICR1..4</code> registers. Example: EXTI4 can source from PA4, PB4, PC4… (<code>0001</code> = port B).</div>
+  <div class="box warn"><span class="lbl">Shared ISRs</span>
+    Not every line has its own vector. Lines 5–9 share <code>EXTI9_5_IRQHandler</code>; lines 10–15 share <code>EXTI15_10_IRQHandler</code>. Inside a shared ISR you must check the <b>PR</b> to see which line actually fired. Lines 0–4 have their own dedicated handlers (<code>EXTI0_IRQHandler</code> … <code>EXTI4_IRQHandler</code>).</div>
+
+  <h3 id="ch5-lab53">Lab 5.3 — EXTI interrupt (button)</h3>
+  <p>Button on PB4 → light PA5, using EXTI line 4 instead of polling. Because SYSCFG is involved, enable its clock too (<code>RCC_APB2ENR_SYSCFGEN</code>).</p>
+  <h4>Setup checklist (from the reference manual)</h4>
+  <ol>
+    <li>Enable the EXTI line in <b>IMR</b> (<code>EXTI-&gt;IMR |= EXTI_IMR_MR4</code>).</li>
+    <li>Choose the edge in <b>RTSR</b> and/or <b>FTSR</b>.</li>
+    <li>Route the pin's port in <b>SYSCFG_EXTICR</b> (EXTI4 lives in <code>EXTICR[1]</code>; write <code>0001</code> for port B).</li>
+    <li><code>NVIC_EnableIRQ(EXTI4_IRQn)</code>.</li>
+  </ol>
+  <pre><code><span class="kw">void</span> <span class="fn">EXTI4_IRQHandler</span>(<span class="kw">void</span>){
+    <span class="kw">if</span>((<span class="reg">EXTI</span>->PR & <span class="reg">EXTI_PR_PR4</span>) != <span class="num">0</span>){
+        <span class="kw">if</span>((<span class="reg">GPIOB</span>->IDR & <span class="reg">GPIO_IDR_ID4</span>) == <span class="num">0</span>)
+            <span class="reg">GPIOA</span>->ODR |= <span class="reg">GPIO_ODR_OD5</span>;
+        <span class="kw">else</span>
+            <span class="reg">GPIOA</span>->ODR &= ~<span class="reg">GPIO_ODR_OD5</span>;
+        <span class="reg">EXTI</span>->PR |= <span class="reg">EXTI_PR_PR4</span>;   <span class="cm">// clear pending: write 1!</span>
+    }
+}
+<span class="cm">// setup:</span>
+<span class="reg">RCC</span>->APB2ENR |= <span class="reg">RCC_APB2ENR_SYSCFGEN</span>;
+<span class="reg">EXTI</span>->IMR  |= <span class="reg">EXTI_IMR_MR4</span>;                  <span class="cm">// unmask line 4</span>
+<span class="reg">EXTI</span>->RTSR |= <span class="reg">EXTI_RTSR_TR4</span>;                 <span class="cm">// rising edge</span>
+<span class="reg">EXTI</span>->FTSR |= <span class="reg">EXTI_FTSR_TR4</span>;                 <span class="cm">// falling edge (both)</span>
+<span class="reg">SYSCFG</span>->EXTICR[<span class="num">1</span>] &= ~<span class="reg">SYSCFG_EXTICR2_EXTI4</span>;
+<span class="reg">SYSCFG</span>->EXTICR[<span class="num">1</span>] |= (<span class="num">0b0001</span> &lt;&lt; <span class="reg">SYSCFG_EXTICR2_EXTI4_Pos</span>);  <span class="cm">// port B</span>
+<span class="fn">NVIC_EnableIRQ</span>(<span class="reg">EXTI4_IRQn</span>);
+<span class="fn">NVIC_SetPriority</span>(<span class="reg">EXTI4_IRQn</span>, <span class="num">0</span>);</code></pre>
+  <div class="box exam"><span class="lbl">The #1 EXTI mistake</span>
+    Forgetting to <span class="hl">clear the pending bit</span> (<code>EXTI-&gt;PR |= EXTI_PR_PRx</code>) at the end of the ISR. If you don't, the interrupt re-fires forever and the program appears frozen. You clear it by writing <b>1</b>, not 0.</div>
+</section>
+
+<!-- ================= EXAM ================= -->
+<section id="exam">
+  <h2 class="ch">Exam checklist</h2>
+  <p>If you can do every item below from memory, you're ready.</p>
+  <div class="grid2">
+    <div class="box key"><span class="lbl">Concepts to explain</span>
+      <ul>
+        <li>Memory-mapped I/O — why a register is just an address</li>
+        <li>The 4-step peripheral pattern (clock → pin → config → use)</li>
+        <li>Polling vs interrupt; dangers of blocking functions</li>
+        <li>UART frame anatomy, baud, parity, 8-N-1, LSB-first</li>
+        <li>ADC conversion formula & resolution</li>
+        <li>NTC/LDR voltage divider → resistance → value</li>
+        <li>NVIC flow, priority, nesting; ISR naming rule</li>
+        <li>EXTI line↔pin mapping, shared ISRs, clearing PR</li>
+      </ul>
+    </div>
+    <div class="box exam"><span class="lbl">Code you should reproduce</span>
+      <ul>
+        <li>Enable a peripheral clock (right RCC register per bus)</li>
+        <li>Set a pin to output / input / alternate / analog (clear-then-set)</li>
+        <li>Read a button via IDR with pull-up/down</li>
+        <li>UART Tx byte & string (wait on TXE), Rx (wait on RXNE)</li>
+        <li>Single ADC conversion (SWSTART → wait EOC → read DR)</li>
+        <li>Enable FPU before float math</li>
+        <li>Write a correctly-named <code>_IRQHandler</code></li>
+        <li>Full EXTI button setup incl. SYSCFG + clearing PR</li>
+      </ul>
+    </div>
+  </div>
+  <div class="box tip"><span class="lbl">Bus memory aid</span>
+    <b>GPIO → AHB1</b>, <b>USART2 → APB1</b>, <b>ADC1 &amp; SYSCFG → APB2</b>. Picking the wrong RCC register is the most common exam slip.</div>
+</section>
+
+<!-- ================= PIN MAP ================= -->
+<section id="pinmap">
+  <h2 class="ch">Board pin map (STEO shield)</h2>
+  <table>
+    <tr><th>Pin</th><th>Silkscreen</th><th>Connected to</th></tr>
+    <tr><td>PA5</td><td>D13</td><td>Blue LED</td></tr>
+    <tr><td>PA6</td><td>D12</td><td>Red LED</td></tr>
+    <tr><td>PA7</td><td>D11</td><td>Yellow LED</td></tr>
+    <tr><td>PB6</td><td>D10</td><td>Green LED</td></tr>
+    <tr><td>PA10</td><td>D2</td><td>Button</td></tr>
+    <tr><td>PB3</td><td>D3</td><td>Button</td></tr>
+    <tr><td>PB5</td><td>D4</td><td>Button</td></tr>
+    <tr><td>PB4</td><td>D5</td><td>Button (Lab 5.3)</td></tr>
+    <tr><td>PA4</td><td>—</td><td>Potentiometer (ADC ch4)</td></tr>
+    <tr><td>PA2 / PA3</td><td>—</td><td>USART2 Tx / Rx (AF7)</td></tr>
+    <tr><td>PA0</td><td>—</td><td>Analog in for NTC/LDR labs (ADC ch0)</td></tr>
+  </table>
+  <hr>
+  <p class="toc-back">Built from NEXTY Electronics / Toyota Tsusho STEO course slides (Ch 0, 1, 3, 4, 5). Study guide for self-paced learning — verify register bit names against <code>stm32f4xx.h</code> and RM0383 when in doubt.</p>
+</section>
+</div>
+</main>
+</div>
+<script>
+(function(){
+  var prog=document.getElementById('progress');
+  var links=[].slice.call(document.querySelectorAll('nav.side a.item'));
+  var map={};links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+  var secs=[].slice.call(document.querySelectorAll('section[id], h3[id]'));
+  function onScroll(){
+    var h=document.documentElement;
+    var sc=h.scrollTop||document.body.scrollTop;
+    var max=h.scrollHeight-h.clientHeight;
+    prog.style.width=(max>0?(sc/max*100):0)+'%';
+    var cur=null;
+    for(var i=0;i<secs.length;i++){
+      if(secs[i].getBoundingClientRect().top<=130) cur=secs[i].id;
+    }
+    links.forEach(function(a){a.classList.remove('active');});
+    if(cur&&map[cur]) map[cur].classList.add('active');
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});
+  window.addEventListener('resize',onScroll);onScroll();
+})();
+</script>
+</body>
+</html>
