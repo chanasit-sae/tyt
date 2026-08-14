@@ -1,0 +1,70 @@
+SENSOR CONVERSION TOOLS
+=======================
+
+Small Python scripts that convert between raw 12-bit ADC codes (0-4095) and
+real-world sensor values for the STM32F411RE labs. Every script works BOTH ways:
+
+    ADC code   ->  real value          (what your board reads)
+    real value ->  ADC threshold code  (handy for exam "when does the LED turn on?")
+
+Requirements: Python 3 only. No extra packages to install.
+Run from inside this folder (sensor_tools).
+
+
+-------------------------------------------------------------------------------
+1. POTENTIOMETER   (PA4, ADC channel 4)   ->  potentiometer.py
+-------------------------------------------------------------------------------
+Pick ONE option per run:
+
+    python3 potentiometer.py --adc 2655       ADC code -> voltage and turn %
+    python3 potentiometer.py --volt 2.14      voltage  -> ADC code
+    python3 potentiometer.py --percent 50     turn %   -> ADC threshold code
+
+Example:
+    $ python3 potentiometer.py --adc 2655
+    ADC 2655 -> 2.140 V -> 64.8 %
+
+
+-------------------------------------------------------------------------------
+2. NTC THERMISTOR   (PA0, ADC channel 0)   ->  ntc_thermistor.py
+-------------------------------------------------------------------------------
+    python3 ntc_thermistor.py --adc 1850      ADC code    -> temperature (C)
+    python3 ntc_thermistor.py --temp 30       temperature -> ADC threshold code
+
+Example:
+    $ python3 ntc_thermistor.py --temp 30
+    30.00 C -> ADC threshold 1824
+
+
+-------------------------------------------------------------------------------
+3. LDR / PHOTORESISTOR   (PA0, ADC channel 0)   ->  ldr.py
+-------------------------------------------------------------------------------
+    python3 ldr.py --adc 1200                  ADC code -> light intensity (lux)
+    python3 ldr.py --lux 300                   lux      -> ADC threshold code
+
+Example:
+    $ python3 ldr.py --adc 1200
+    ADC 1200 -> 157 lux
+
+
+-------------------------------------------------------------------------------
+CONSTANTS USED (from the course slides)
+-------------------------------------------------------------------------------
+    VREF / VCC   = 3.3 V
+    ADC_MAX      = 4095   (12-bit: 2^12 - 1)
+    RX           = 10000 ohm  (fixed divider resistor)
+    NTC: R0=10000, T0=298.15 K (25 C), BETA=3950
+    LDR: SLOPE=-0.6875, OFFSET=5.1276   <-- GL5528; VERIFY against the slide.
+
+If your assignment uses different constants, edit the values near the top of
+each script.
+
+
+-------------------------------------------------------------------------------
+HOW THE MATH WORKS (quick reference)
+-------------------------------------------------------------------------------
+    ADC code -> voltage:   V   = adc * VREF / 4095
+    voltage  -> ADC code:  adc = floor( V / VREF * 4095 )
+    divider  -> resistance: R  = RX * Vout / (VCC - Vout)
+    NTC:  T[K] = (BETA * T0) / (T0 * ln(R/R0) + BETA),  then subtract 273.15
+    LDR:  lux  = 10 ^ ((log10(R) - OFFSET) / SLOPE)
